@@ -1,0 +1,6 @@
+# Contoh loop dengan continue
+for i in range(1, 10):
+    if i == 5:
+        print("Melewati angka:", i)
+        continue
+    print(i)

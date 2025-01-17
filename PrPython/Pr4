@@ -1,0 +1,12 @@
+# Meminta input usia
+usia = int(input("Masukkan usia Anda: "))
+
+# Menentukan kategori umur
+if usia < 10:
+    print("Anda termasuk anak kecil.")
+elif 11 <= usia <= 17:
+    print("Anda termasuk remaja.")
+elif 18 <= usia <= 50:
+    print("Anda termasuk dewasa.")
+else:
+    print("Anda termasuk lansia.")

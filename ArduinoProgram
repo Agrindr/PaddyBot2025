@@ -1,0 +1,32 @@
+#define MOTOR_PIN1 9  // Motor control pin 1
+#define MOTOR_PIN2 10 // Motor control pin 2
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(MOTOR_PIN1, OUTPUT);
+  pinMode(MOTOR_PIN2, OUTPUT);
+  Serial.println("Arduino is ready.");
+}
+
+void loop() {
+  if (Serial.available() > 0) {
+    String command = Serial.readStringUntil('\n');
+    command.trim(); // Remove any trailing newline or spaces
+
+    if (command == "FORWARD") {
+      digitalWrite(MOTOR_PIN1, HIGH);
+      digitalWrite(MOTOR_PIN2, LOW);
+      Serial.println("Motor moving forward");
+    } else if (command == "BACKWARD") {
+      digitalWrite(MOTOR_PIN1, LOW);
+      digitalWrite(MOTOR_PIN2, HIGH);
+      Serial.println("Motor moving backward");
+    } else if (command == "STOP") {
+      digitalWrite(MOTOR_PIN1, LOW);
+      digitalWrite(MOTOR_PIN2, LOW);
+      Serial.println("Motor stopped");
+    } else {
+      Serial.println("Unknown command");
+    }
+  }
+}

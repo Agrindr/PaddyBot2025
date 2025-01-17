@@ -1,0 +1,101 @@
+import cv2
+import mediapipe as mp
+
+# Initialize Mediapipe Hand Detector
+mp_hands = mp.solutions.hands
+mp_drawing = mp.solutions.drawing_utils
+hands = mp_hands.Hands(min_detection_confidence=0.7, min_tracking_confidence=0.5)
+
+# Start the webcam
+cap = cv2.VideoCapture(0)
+
+def draw_square_and_display_coordinates(img, x, y, w, h):
+    # Draw a square
+    cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 0), 2)
+    # Display the coordinates
+    text = f"X: {x}, Y: {y}"
+    cv2.putText(img, text, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+
+def is_fist(hand_landmarks):
+    """
+    Detect if a hand gesture is a fist based on landmark positions.
+    """
+    try:
+        required_landmarks = [
+            mp_hands.HandLandmark.WRIST,
+            mp_hands.HandLandmark.THUMB_TIP,
+            mp_hands.HandLandmark.INDEX_TIP,
+            mp_hands.HandLandmark.MIDDLE_TIP,
+            mp_hands.HandLandmark.RING_TIP,
+            mp_hands.HandLandmark.PINKY_TIP,
+        ]
+        
+        # Ensure all required landmarks are detected
+        for landmark in required_landmarks:
+            if not hand_landmarks.landmark[landmark]:
+                raise ValueError(f"Missing landmark: {landmark}")
+
+        wrist = hand_landmarks.landmark[mp_hands.HandLandmark.WRIST]
+        finger_tips = [
+            hand_landmarks.landmark[mp_hands.HandLandmark.THUMB_TIP],
+            hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_TIP],
+            hand_landmarks.landmark[mp_hands.HandLandmark.MIDDLE_TIP],
+            hand_landmarks.landmark[mp_hands.HandLandmark.RING_TIP],
+            hand_landmarks.landmark[mp_hands.HandLandmark.PINKY_TIP],
+        ]
+        # Check if all fingertips are below the wrist (greater y-coordinate in image space)
+        return all(finger_tip.y > wrist.y for finger_tip in finger_tips)
+    except (AttributeError, ValueError) as e:
+        print(f"Error in fist detection: {e}")
+        return False
+
+while cap.isOpened():
+    ret, frame = cap.read()
+    if not ret:
+        print("Failed to grab frame. Exiting.")
+        break
+
+    # Flip the frame for a mirror effect
+    frame = cv2.flip(frame, 1)
+
+    # Convert the frame to RGB for Mediapipe processing
+    rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    results = hands.process(rgb_frame)
+
+    if results.multi_hand_landmarks:
+        for hand_landmarks in results.multi_hand_landmarks:
+            try:
+                # Get the bounding box for the hand
+                x_min = int(min([lm.x for lm in hand_landmarks.landmark]) * frame.shape[1])
+                y_min = int(min([lm.y for lm in hand_landmarks.landmark]) * frame.shape[0])
+                x_max = int(max([lm.x for lm in hand_landmarks.landmark]) * frame.shape[1])
+                y_max = int(max([lm.y for lm in hand_landmarks.landmark]) * frame.shape[0])
+
+                # Calculate the width and height of the bounding box
+                w = x_max - x_min
+                h = y_max - y_min
+
+                # Draw the square and display the coordinates
+                draw_square_and_display_coordinates(frame, x_min, y_min, w, h)
+
+                # Detect fist gesture
+                if is_fist(hand_landmarks):
+                    cv2.putText(frame, "You are making a fist!", (x_min, y_min - 30),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
+                    print("You are making a fist!")
+
+                # Draw landmarks and connections on the hand
+                mp_drawing.draw_landmarks(frame, hand_landmarks, mp_hands.HAND_CONNECTIONS)
+            except Exception as e:
+                print(f"Error processing hand landmarks: {e}")
+
+    # Display the frame
+    cv2.imshow('Hand Detection', frame)
+
+    # Exit on pressing 'q'
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+
+# Release resources
+cap.release()
+cv2.destroyAllWindows()

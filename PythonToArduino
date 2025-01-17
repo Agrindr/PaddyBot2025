@@ -1,0 +1,63 @@
+import serial
+import time
+
+def connect_to_arduino(port, baud_rate=9600):
+    """
+    Establish a serial connection to the Arduino.
+    :param port: Serial port to which the Arduino is connected (e.g., '/dev/ttyUSB0').
+    :param baud_rate: Baud rate for the serial connection (default is 9600).
+    :return: Serial connection object.
+    """
+    try:
+        ser = serial.Serial(port, baud_rate, timeout=1)
+        time.sleep(2)  # Wait for the Arduino to reset
+        print("Connected to Arduino on port", port)
+        return ser
+    except serial.SerialException as e:
+        print(f"Error connecting to Arduino: {e}")
+        return None
+
+def send_motor_command(ser, command):
+    """
+    Send a motor control command to the Arduino.
+    :param ser: Serial connection object.
+    :param command: Command string to send (e.g., 'FORWARD', 'BACKWARD', 'STOP').
+    """
+    if ser and ser.is_open:
+        ser.write(command.encode('utf-8'))
+        print(f"Sent command: {command}")
+    else:
+        print("Serial connection is not open!")
+
+def main():
+    # Adjust the port as per your system
+    port = '/dev/ttyUSB0'  # Replace with the correct port for your setup
+    baud_rate = 9600
+
+    # Connect to Arduino
+    arduino = connect_to_arduino(port, baud_rate)
+
+    if not arduino:
+        return
+
+    try:
+        while True:
+            # Example commands to control the motor
+            command = input("Enter motor command (FORWARD, BACKWARD, STOP): ").strip().upper()
+            
+            if command in {'FORWARD', 'BACKWARD', 'STOP'}:
+                send_motor_command(arduino, command)
+            elif command == 'EXIT':
+                print("Exiting program.")
+                break
+            else:
+                print("Invalid command! Try FORWARD, BACKWARD, STOP, or EXIT.")
+    except KeyboardInterrupt:
+        print("\nProgram interrupted by user.")
+    finally:
+        if arduino:
+            arduino.close()
+            print("Serial connection closed.")
+
+if __name__ == '__main__':
+    main()

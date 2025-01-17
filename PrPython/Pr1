@@ -1,0 +1,7 @@
+# Meminta input dari pengguna
+nama = input("Masukkan nama Anda: ")
+usia = int(input("Masukkan usia Anda: "))
+tinggi = float(input("Masukkan tinggi badan Anda (dalam cm): "))
+
+# Menampilkan pesan
+print(f"Halo {nama}, usia Anda {usia} tahun dan tinggi badan Anda {tinggi} cm.")
